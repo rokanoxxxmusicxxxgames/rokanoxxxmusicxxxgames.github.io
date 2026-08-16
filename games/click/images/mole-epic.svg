@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="超レアもぐら">
+  <defs>
+    <linearGradient id="furEpic" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#db9af6"/>
+      <stop offset="100%" stop-color="#8e59c1"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="42" fill="url(#furEpic)"/>
+  <circle cx="31" cy="26" r="11" fill="#5f3b88"/>
+  <circle cx="89" cy="26" r="11" fill="#5f3b88"/>
+  <circle cx="42" cy="47" r="6" fill="#1d1d1d"/>
+  <circle cx="78" cy="47" r="6" fill="#1d1d1d"/>
+  <ellipse cx="60" cy="62" rx="14" ry="11" fill="#ffd6ff"/>
+  <path d="M52 68 Q60 76 68 68" fill="none" stroke="#3d1d54" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="60" cy="18" r="10" fill="#ffe082"/>
+  <circle cx="46" cy="20" r="7" fill="#fff3a8"/>
+  <circle cx="74" cy="20" r="7" fill="#fff3a8"/>
+</svg>
