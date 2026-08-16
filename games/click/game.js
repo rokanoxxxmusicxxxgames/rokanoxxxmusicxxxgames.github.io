@@ -4,15 +4,16 @@ const timeText = document.getElementById("time");
 const holes = [...document.querySelectorAll(".mole")];
 
 const rarityConfig = {
-    normal: { points: 1, durationMin: 800, durationMax: 1300, imageKey: "normal" },
-    rare: { points: 3, durationMin: 500, durationMax: 850, imageKey: "rare" },
-    epic: { points: 5, durationMin: 300, durationMax: 550, imageKey: "epic" },
+    normal: { points: 1, durationMin: 800, durationMax: 1300, imageKey: "normal", sound: { file: "sounds/mole-normal.wav", frequency: 220, duration: 0.12, type: "triangle" } },
+    rare: { points: 3, durationMin: 500, durationMax: 850, imageKey: "rare", sound: { file: "sounds/mole-rare.wav", frequency: 330, duration: 0.16, type: "square" } },
+    epic: { points: 5, durationMin: 300, durationMax: 550, imageKey: "epic", sound: { file: "sounds/mole-epic.wav", frequency: 440, duration: 0.22, type: "sawtooth" } },
 };
 
 let score = 0;
 let timeLeft = 30;
 let timer = null;
 let waveTimer = null;
+let audioContext = null;
 const holeTimers = new Map();
 
 startButton.addEventListener("click", startGame);
@@ -24,8 +25,11 @@ holes.forEach((hole) => {
         }
 
         const points = Number(hole.dataset.points || rarityConfig.normal.points);
+        const rarity = hole.dataset.rarity || "normal";
         score += points;
         scoreText.textContent = `スコア：${score}`;
+
+        playHitSound(rarity);
 
         const image = hole.querySelector(".mole-image");
         const pointsBadge = hole.querySelector(".mole-points");
@@ -46,6 +50,8 @@ holes.forEach((hole) => {
 });
 
 function startGame() {
+    ensureAudioContext();
+
     score = 0;
     timeLeft = 30;
 
@@ -186,4 +192,62 @@ function endGame() {
     startButton.disabled = false;
 
     alert(`終了！\nあなたのスコアは ${score} 点です！`);
+}
+
+function ensureAudioContext() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+        return;
+    }
+
+    if (!audioContext) {
+        audioContext = new AudioContextClass();
+    }
+
+    if (audioContext.state === "suspended") {
+        audioContext.resume();
+    }
+}
+
+function playHitSound(rarity) {
+    const config = rarityConfig[rarity] || rarityConfig.normal;
+    const sound = config.sound || rarityConfig.normal.sound;
+
+    if (sound.file) {
+        const audio = new Audio(sound.file);
+        audio.volume = 0.5;
+        audio.play().catch(() => {
+            playTone(sound);
+        });
+        return;
+    }
+
+    playTone(sound);
+}
+
+function playTone(sound) {
+    if (!audioContext) {
+        ensureAudioContext();
+    }
+
+    if (!audioContext) {
+        return;
+    }
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    const now = audioContext.currentTime;
+
+    oscillator.type = sound.type || "triangle";
+    oscillator.frequency.setValueAtTime(sound.frequency || 220, now);
+
+    gainNode.gain.setValueAtTime(0.0001, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.15, now + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + (sound.duration || 0.12));
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + (sound.duration || 0.12));
 }
