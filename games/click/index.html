@@ -34,7 +34,11 @@
 
     <a href="../../">← ゲーム一覧に戻る</a>
 
-    <script src="game.js"></script>
+    <script>
+        const gameScript = document.createElement("script");
+        gameScript.src = "game.js";
+        document.body.appendChild(gameScript);
+    </script>
 
 </body>
 </html>
