@@ -1,0 +1,14 @@
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN',Meiryo,Arial;margin:0;padding:0;background:#f6f8fb;color:#222}
+#game{max-width:900px;margin:20px auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:center}
+#play-area{position:relative;height:320px;background:linear-gradient(#aee,#fff);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:space-between;padding:24px}
+.character{width:160px;height:160px;display:flex;align-items:center;justify-content:center}
+.character img{max-width:100%;max-height:100%}
+#fish-layer{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none}
+.fish{position:absolute;width:64px;height:32px;transform-origin:center;transition:transform 0.6s linear, opacity 0.25s ease}
+.hit{box-shadow:0 0 18px 6px rgba(255,200,50,0.3);border-radius:50%}
+#controls{margin-top:14px}
+button{padding:8px 12px;font-size:16px;margin-right:8px}
+#feedback{position:absolute;left:50%;top:10px;transform:translateX(-50%);padding:6px 10px;border-radius:6px;background:rgba(0,0,0,0.6);color:#fff;display:none}
+@media (max-width:600px){.character{width:110px;height:110px}.fish{width:48px;height:24px}}

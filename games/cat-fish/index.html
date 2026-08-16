@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Cat & Fish Rhythm (試作)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game">
+    <header>
+      <h1>Cat & Fish Rhythm (試作)</h1>
+      <div id="score">クマが食べた数: <span id="score-val">0</span></div>
+      <div id="measure-count">0 / 10 小節</div>
+    </header>
+
+    <main>
+      <div id="play-area">
+        <div id="cat" class="character">
+          <img src="images/cat.svg" alt="cat">
+        </div>
+        <div id="feedback" aria-hidden="true"></div>
+        <div id="bear" class="character">
+          <img src="images/bear.svg" alt="bear">
+        </div>
+        <div id="fish-layer" aria-hidden="true"></div>
+      </div>
+
+      <div id="controls">
+        <button id="start">スタート</button>
+        <button id="restart">リスタート</button>
+        <p>画面をタップ/クリックして魚を受け取らせよう。猫が「ニャー」と鳴くタイミングでタップすると成功。</p>
+      </div>
+
+    </main>
+    <footer>
+      <small>仮の画像と合成音声で動作する試作です。</small>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
