@@ -2,8 +2,44 @@
 body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN',Meiryo,Arial;margin:0;padding:0;background:#f6f8fb;color:#222}
 #game{max-width:900px;margin:20px auto;padding:16px}
 header{display:flex;justify-content:space-between;align-items:center}
-#play-area{position:relative;height:320px;background:linear-gradient(#aee,#fff);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:space-between;padding:24px}
-.character{width:160px;height:160px;display:flex;align-items:center;justify-content:center}
+#play-area{
+  position:relative;
+  height:420px;
+  background:linear-gradient(#aee,#fff);
+  border-radius:8px;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:24px;
+  gap:12px;
+  flex-direction:row;
+}
+
+.tap-area{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  height:110px;
+  background:rgba(255,255,255,0.06);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  color:#333;
+  border-top:1px solid rgba(0,0,0,0.06);
+  cursor:pointer;
+  z-index:30;
+  pointer-events:auto;
+}
+
+@media (max-width:700px){
+  #play-area{flex-direction:column;height:620px;padding:18px}
+  .character{width:160px;height:160px}
+  .tap-area{position:relative;height:86px;margin-top:12px;border-radius:8px}
+}
+.character{width:160px;height:160px;display:flex;align-items:center;justify-content:center;position:relative}
 .character img{max-width:100%;max-height:100%}
 #fish-layer{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none}
 .fish{position:absolute;width:64px;height:32px;transform-origin:center;transition:transform 0.6s linear, opacity 0.25s ease}
@@ -11,4 +47,94 @@ header{display:flex;justify-content:space-between;align-items:center}
 #controls{margin-top:14px}
 button{padding:8px 12px;font-size:16px;margin-right:8px}
 #feedback{position:absolute;left:50%;top:10px;transform:translateX(-50%);padding:6px 10px;border-radius:6px;background:rgba(0,0,0,0.6);color:#fff;display:none}
-@media (max-width:600px){.character{width:110px;height:110px}.fish{width:48px;height:24px}}
+
+.judgement{
+  position:absolute;
+  left:50%;
+  top:20%;
+  transform:translateX(-50%);
+  padding:10px 18px;
+  border-radius:10px;
+  font-size:22px;
+  font-weight:700;
+  color:#222;
+  background:rgba(255,255,255,0.9);
+  opacity:0;
+  transition:opacity 0.12s ease, transform 0.18s ease;
+  pointer-events:none;
+  z-index:40;
+}
+.judgement.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
+.judgement.perfect{background:#fff0a8;color:#b36b00}
+.judgement.good{background:#d6f7d6;color:#0a7b19}
+.judgement.miss{background:#ffd6d6;color:#7b0a0a}
+.judgement.measure{background:#e8f0ff;color:#123a7a}
+
+.judgement.measure{background:#e8f0ff;color:#123a7a}
+
+/* hit zone around bear to indicate when tapping will register */
+.hit-zone{
+  position:absolute;
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  left:50%;
+  transform:translateX(-50%);
+  top:50%;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity 0.14s ease, transform 0.14s ease, box-shadow 0.14s ease;
+  z-index:35;
+  background: radial-gradient(circle at 40% 30%, rgba(255,245,210,0.14), rgba(255,245,210,0.02));
+}
+.hit-zone.active{
+  opacity:1;
+  transform:translateX(-50%) scale(1.08);
+  box-shadow:0 0 0 8px rgba(255,230,130,0.22), 0 0 24px 28px rgba(255,200,80,0.06);
+  backdrop-filter: blur(2px);
+}
+
+/* fish approach highlight to make timing obvious (do not override translate transform) */
+.fish.approach{ filter: drop-shadow(0 8px 18px rgba(0,0,0,0.18)); transform-origin:center; }
+.fish.approach img{ transform: rotate(3deg); }
+
+/* turn banner indicating whose turn it is */
+.turn-banner{
+  position:absolute;
+  left:50%;
+  top:8px;
+  transform:translateX(-50%);
+  padding:8px 12px;
+  border-radius:8px;
+  background:rgba(255,255,255,0.95);
+  font-weight:700;
+  z-index:45;
+  color:#222;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  transition:opacity 0.16s ease, transform 0.16s ease;
+}
+.turn-banner.hidden{ opacity:0; transform:translateX(-50%) translateY(-6px); }
+.turn-banner.cat{ background:#fff7e5; color:#6b3f00 }
+.turn-banner.bear{ background:#e8f7ff; color:#0b5a86 }
+
+/* bear eating face effect */
+#bear.eating::after{
+  content:'';
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  width:48px;
+  height:24px;
+  background:linear-gradient(#3a2a22,#2a1a12);
+  border-radius:0 0 30px 30px;
+  bottom:18px;
+  z-index:12;
+  opacity:1;
+}
+#bear.eating img{ transform: translateY(-6px) scale(1.04); filter:brightness(1.08); }
+
+/* hit-zone flash */
+.hit-zone.flash{ box-shadow:0 0 0 10px rgba(255,230,130,0.28), 0 0 40px 48px rgba(255,200,80,0.06); transform:translateX(-50%) scale(1.12); }
+
+@media (max-width:600px){.character{width:110px;height:110px}.fish{width:48px;height:24px}.judgement{font-size:18px;top:14%}.hit-zone{width:140px;height:140px}}
+

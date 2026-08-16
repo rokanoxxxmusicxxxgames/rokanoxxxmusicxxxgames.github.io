@@ -9,9 +9,8 @@
 <body>
   <div id="game">
     <header>
-      <h1>Cat & Fish Rhythm (試作)</h1>
-      <div id="score">クマが食べた数: <span id="score-val">0</span></div>
-      <div id="measure-count">0 / 10 小節</div>
+    <h1>Cat & Fish Rhythm (試作)</h1>
+    <div id="score">スコア: <span id="score-val">0</span></div>
     </header>
 
     <main>
@@ -24,12 +23,26 @@
           <img src="images/bear.svg" alt="bear">
         </div>
         <div id="fish-layer" aria-hidden="true"></div>
+        <div id="hit-zone" class="hit-zone" aria-hidden="true"></div>
+        <div id="turn-banner" class="turn-banner hidden" aria-hidden="true">準備中</div>
+        <button id="tap-area" class="tap-area" aria-label="タップエリア">タップ!</button>
+        <div id="judgement" class="judgement" aria-hidden="true"></div>
       </div>
 
       <div id="controls">
         <button id="start">スタート</button>
         <button id="restart">リスタート</button>
-        <p>画面をタップ/クリックして魚を受け取らせよう。猫が「ニャー」と鳴くタイミングでタップすると成功。</p>
+
+        <label for="difficulty">難易度:</label>
+        <select id="difficulty">
+          <option value="easy">Easy (60 BPM)</option>
+          <option value="normal" selected>Normal (70 BPM)</option>
+          <option value="hard">Hard (90 BPM)</option>
+        </select>
+        <label for="bpm-input">テンポ (BPM):</label>
+        <input id="bpm-input" type="number" value="70" min="30" max="240" style="width:80px">
+
+        <p>画面をタップ/クリックして魚を受け取らせよう。魚がクマに近づくとヒットゾーンが光ります。光ったとき（または魚が大きく見えたとき）にタップすると成功しやすいです。</p>
       </div>
 
     </main>
