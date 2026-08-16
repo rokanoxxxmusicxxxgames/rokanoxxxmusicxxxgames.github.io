@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="もぐら">
+  <defs>
+    <linearGradient id="fur" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#d7a06a"/>
+      <stop offset="100%" stop-color="#b77e4f"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="42" fill="url(#fur)"/>
+  <circle cx="31" cy="26" r="11" fill="#8b5b3c"/>
+  <circle cx="89" cy="26" r="11" fill="#8b5b3c"/>
+  <circle cx="42" cy="47" r="6" fill="#1d1d1d"/>
+  <circle cx="78" cy="47" r="6" fill="#1d1d1d"/>
+  <ellipse cx="60" cy="62" rx="14" ry="11" fill="#ff9da8"/>
+  <path d="M52 68 Q60 76 68 68" fill="none" stroke="#3f2d1f" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="33" cy="72" rx="8" ry="6" fill="#ffb3b3" opacity="0.7"/>
+  <ellipse cx="87" cy="72" rx="8" ry="6" fill="#ffb3b3" opacity="0.7"/>
+</svg>
