@@ -24,13 +24,79 @@
   let approachCount = 0;
   let notesByMeasure = {}; // measure index -> array of note objects {time, status}
   let started = false;
-  // judgement thresholds (seconds) — tightened per user request
-  // Perfect requires close timing; Good allows modest offset; overall hit window limited
-  const JUDGE_PERF = 0.12;  // perfect window: 120ms
-  const JUDGE_GOOD = 0.25;  // good window: 250ms
-  let hitWindow = 0.5; // maximum allowed for any hit (tweakable) (500ms)
+  // judgement thresholds (seconds) — tightened as requested
+  // Perfect requires very close timing; Good allows a smaller offset
+  const JUDGE_PERF = 0.08;  // perfect window: 80ms (stricter)
+  const JUDGE_GOOD = 0.16;  // good window: 160ms (stricter)
+  let hitWindow = 0.35; // maximum allowed for any hit (350ms)
   // Fish travel: control speed via BPM. TRAVEL_BEATS = how many beats it takes for a fish to travel from cat to bear
   const TRAVEL_BEATS = 1.0; // 1 beat by default -> travel time = secondsPerBeat() * 1000 * TRAVEL_BEATS
+
+  // ---- Bear image state helper ----
+  // NOTE: BEAR_EATING_SRC のパスはお使いの画像ファイル名に合わせて変更してください
+  const BEAR_IDLE_SRC = 'images/bear.svg';
+  const BEAR_EATING_SRC = 'images/bear-eating.svg';
+
+  function setBearEating(isEating){
+    bearEl.classList.toggle('hit', isEating);
+    bearEl.classList.toggle('eating', isEating);
+    const img = bearEl.querySelector('img');
+    if(img) img.src = isEating ? BEAR_EATING_SRC : BEAR_IDLE_SRC;
+  }
+
+  // ---- Perfect/Good 判定範囲の可視化（クマの上に重ねる半透明の円） ----
+  // NOTE: 実際の判定は時間ベースで行われる。ここでのpx半径は、
+  //       Miss時の距離ベース救済判定（onUserInput内のthreshold=80/56px）に合わせた「目安」の表示。
+  let goodZoneEl = null;
+  let perfectZoneEl = null;
+
+  function ensureZoneStyles(){
+    if(document.getElementById('judge-zone-style')) return;
+    const style = document.createElement('style');
+    style.id = 'judge-zone-style';
+    style.textContent = `
+      .judge-zone{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);box-sizing:border-box;z-index:3;}
+      .judge-zone.good{background:rgba(220,40,40,0.20);border:1px solid rgba(220,40,40,0.35);}
+      .judge-zone.perfect{background:rgba(40,180,90,0.30);border:1px solid rgba(40,180,90,0.5);}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function ensureZoneElements(){
+    ensureZoneStyles();
+    if(!goodZoneEl){
+      goodZoneEl = document.createElement('div');
+      goodZoneEl.className = 'judge-zone good';
+      playArea.appendChild(goodZoneEl);
+    }
+    if(!perfectZoneEl){
+      perfectZoneEl = document.createElement('div');
+      perfectZoneEl.className = 'judge-zone perfect';
+      playArea.appendChild(perfectZoneEl);
+    }
+  }
+
+  function updateZoneOverlay(){
+    if(!goodZoneEl || !perfectZoneEl) return;
+    const areaRect = playArea.getBoundingClientRect();
+    const bearRect = bearEl.getBoundingClientRect();
+    const cx = bearRect.left + bearRect.width/2 - areaRect.left;
+    const cy = bearRect.top + bearRect.height/2 - areaRect.top;
+
+    // onUserInput内の距離救済判定と同じ半径をGoodの目安として使用
+    const goodRadius = (window.innerWidth < 600) ? 56 : 80;
+    const perfectRadius = Math.round(goodRadius * 0.45);
+
+    goodZoneEl.style.left = cx + 'px';
+    goodZoneEl.style.top = cy + 'px';
+    goodZoneEl.style.width = (goodRadius * 2) + 'px';
+    goodZoneEl.style.height = (goodRadius * 2) + 'px';
+
+    perfectZoneEl.style.left = cx + 'px';
+    perfectZoneEl.style.top = cy + 'px';
+    perfectZoneEl.style.width = (perfectRadius * 2) + 'px';
+    perfectZoneEl.style.height = (perfectRadius * 2) + 'px';
+  }
 
   function ensureAudio(){
     if(!audioCtx){
@@ -229,46 +295,38 @@
   }
 
   // play the bear's munches for a completed cat measure
+  // NOTE: この関数はスコア判定と「食べた時の演出/効果音」だけを担当します。
+  // 魚自体の動き（右へ通過し続ける／捕獲されて消える）はここでは一切触りません。
+  // - Miss の場合: 魚は createFishAnimation で開始した動きのまま、そのまま右へ通過し続けます（何もしない）。
+  // - Hit(Good/Perfect) の場合: タップ時点で animateFishToBear() により既に魚は消えているはずなので、
+  //   ここでは念のためのフォールバック処理のみ行います。
   function playBearMeasure(catMeasureIndex){
     const notes = notesByMeasure[catMeasureIndex] || [];
     if(notes.length === 0) return;
+    // Good判定の許容幅(JUDGE_GOOD)より後に最終判定するための余裕
+    const DECISION_BUFFER_MS = Math.round(JUDGE_GOOD * 1000) + 60; // ≒220ms
     notes.forEach(n => {
       const munchTime = n.munchTime || (n.time + beatsPerMeasure * secondsPerBeat()); // use precomputed munchTime
-      // schedule visual bear munch and fish removal (and audio only if eaten)
-      const ms = Math.max(0, (munchTime - (audioCtx ? audioCtx.currentTime : 0)) * 1000 - 10);
+      const ms = Math.max(0, (munchTime - (audioCtx ? audioCtx.currentTime : 0)) * 1000 + DECISION_BUFFER_MS);
       setTimeout(()=>{
         try{
-          const f = n.fishEl;
-          // Treat a note as eaten if it was judged Good or Perfect, or if n.hit is true (backwards-compat)
-          if((n.status === 'Perfect' || n.status === 'Good') || n.hit){
-            // Player hit this note: play munch and show bear eating regardless of fish DOM presence
+          const eaten = (n.status === 'Perfect' || n.status === 'Good') || n.hit;
+          if(eaten){
+            // 捕獲成功: 効果音とクマの演出
             playMunch(munchTime);
-            bearEl.classList.add('hit');
-            bearEl.classList.add('eating');
-            setTimeout(()=>bearEl.classList.remove('hit'), 160);
-            setTimeout(()=>bearEl.classList.remove('eating'), 360);
-            // animate bite and remove fish if present
+            setBearEating(true);
+            setTimeout(()=>setBearEating(false), 360);
+            // フォールバック: 何らかの理由でまだ魚が残っていれば消す
+            const f = n.fishEl;
             if(f && f.parentElement){
               f.style.transition = 'transform 160ms ease, opacity 180ms ease';
-              f.style.transform += ' scale(0.3)';
+              f.style.transform = 'scale(0.3)';
               f.style.opacity = '0';
               setTimeout(()=>{ if(f && f.parentElement) f.remove(); }, 220);
             }
-            // mark as eaten so continuation doesn't run
             try{ n.eaten = true; }catch(e){}
-          } else {
-            // Missed note: do nothing for bear animation; fish should continue past the bear
-            // ensure fish will continue: if fish still exists, trigger continuation now
-            if(f && f.parentElement){
-              try{
-                const areaRectLocal = playArea.getBoundingClientRect();
-                const extraX = Math.max(160, areaRectLocal.width * 0.18);
-                f.style.transition = 'transform 700ms linear, opacity 300ms ease';
-                f.style.transform = `translate(${(bearEl.getBoundingClientRect().left - areaRectLocal.left) + extraX}px, ${f.style.top || 0})`;
-                setTimeout(()=>{ if(f && f.parentElement) f.remove(); }, 900);
-              }catch(e){ }
-            }
           }
+          // Miss の場合はここでは何もしない。魚は自然に右へ通過し続ける。
         }catch(e){ /* ignore */ }
       }, ms);
     });
@@ -276,7 +334,7 @@
     // schedule deletion of these notes after the last munch finishes so memory is freed
     try{
       const lastMunch = notes.reduce((acc,n)=>Math.max(acc, n.munchTime||0), 0);
-      const delayMs = Math.max(300, Math.round((lastMunch - (audioCtx?audioCtx.currentTime:Date.now()/1000)) * 1000) + 300);
+      const delayMs = Math.max(300, Math.round((lastMunch - (audioCtx?audioCtx.currentTime:Date.now()/1000)) * 1000) + DECISION_BUFFER_MS + 300);
       // after visual munches, evaluate the measure (so score updates after bear finishes)
       setTimeout(()=>{ try{ evaluateMeasure(catMeasureIndex); }catch(e){} }, delayMs + 40);
       // then delete notes to free memory
@@ -307,13 +365,14 @@
     const startY = catRect.top + catRect.height/2 - areaRect.top - 16;
     const endX = bearRect.left + bearRect.width/2 - areaRect.left - 32;
     const endY = bearRect.top + bearRect.height/2 - areaRect.top - 16;
+
+    // 位置は left/top で管理し、transform は捕獲時の縮小演出専用に空けておく
     fish.style.left = startX + 'px';
     fish.style.top = startY + 'px';
     fish.style.opacity = '1';
-    // ensure no transform applied yet (start from origin)
-    fish.style.transform = 'translate(0,0)';
+    fish.style.transform = 'scale(1)';
 
-    // store reference so bear can eat this specific fish later
+    // store reference so bear/tap handler can find this specific fish later
     if(item) item.fishEl = fish;
 
     // compute when to start (ms relative to now) using audioCtx time to stay in sync
@@ -323,25 +382,33 @@
     // compute when the bear will eat this fish: same offset in the next measure
     const munchTime = (item && item.time) ? (item.time + beatsPerMeasure * secondsPerBeat()) : (scheduledTime + beatsPerMeasure * secondsPerBeat());
 
-    // travelMs = time from scheduledTime to munchTime so fish arrives when bear eats
+    // travelMs = time from scheduledTime to munchTime so fish arrives (passes) the bear position exactly then
     const travelMs = Math.max(120, Math.round((munchTime - scheduledTime) * 1000));
 
-    // set inline transition to match travelMs
-    fish.style.transition = `transform ${travelMs}ms linear, opacity 250ms ease`;
+    // 捕まえられなかった場合、魚は止まらず同じ速度のまま画面外まで右へ通過し続ける。
+    // クマの位置に到達する時刻(munchTime)はこれまで通り保ったまま、その先も一直線に進める。
+    const overshoot = Math.max(160, areaRect.width * 0.25); // 画面外へ十分出るための余白
+    const finalX = areaRect.width + overshoot; // 通過後の最終到達地点（画面右端の外）
+    const rateX = (endX - startX) / travelMs; // クマに届くまでと同じ速度(px/ms)を維持
+    const totalDurationMsX = rateX > 0
+      ? Math.max(travelMs, Math.round((finalX - startX) / rateX))
+      : travelMs + 900;
 
-    // schedule the transform to start exactly at the scheduledTime
-    const startAnim = () => requestAnimationFrame(()=>{
-      fish.style.transform = `translate(${endX - startX}px, ${endY - startY}px)`;
-    });
+    // X（左右）は画面外まで届く長い遷移、Y（上下）はクマの高さに着いたらそこで止まる短い遷移
+    fish.style.transition = `left ${totalDurationMsX}ms linear, top ${travelMs}ms linear, opacity 250ms ease`;
 
-    setTimeout(()=>{ startAnim(); }, startDelayMs);
+    setTimeout(()=>{
+      requestAnimationFrame(()=>{
+        fish.style.left = finalX + 'px';
+        fish.style.top = endY + 'px';
+      });
+    }, startDelayMs);
 
     // highlight the fish as it approaches the bear so players can clearly see when to tap
     try{
       const approachStart = Math.max(0, (munchTime - hitWindow) - (audioCtx ? audioCtx.currentTime : 0));
       const approachEnd = Math.max(0.05, (munchTime + 0.06) - (audioCtx ? audioCtx.currentTime : 0));
       const approachStartMs = Math.round(approachStart * 1000);
-      const approachDurationMs = Math.round((approachEnd + 0) * 1000) + 20; // small cushion
 
       // schedule adding 'approach' class
       setTimeout(()=>{
@@ -361,56 +428,56 @@
       }, approachStartMs + travelMs + 100); // ensure removal after arrival
     }catch(e){ /* ignore scheduling issues */ }
 
-    // Do NOT remove fish here - it should be removed by playBearMeasure when the bear eats the fish (visual bite animation).
-    // However, if a fish was missed (not eaten) it should continue past the bear instead of stopping.
-    // schedule a continuation after arrival (munchTime) to move the fish past the bear if still present
-    const contDelayMs = startDelayMs + travelMs + 30; // shortly after arrival
-    setTimeout(()=>{
-      try{
-        // only continue past the bear if the note was NOT eaten (i.e., not eaten by bear)
-        if(item && item.eaten) return;
-        if(fish && fish.parentElement){
-          // move further to the right (past bear)
-          const extraX = Math.max(160, areaRect.width * 0.18); // ensure noticeable pass-by
-          fish.style.transition = 'transform 700ms linear, opacity 300ms ease';
-          fish.style.transform = `translate(${endX - startX + extraX}px, ${endY - startY}px)`;
-          // remove after it moves past
-          setTimeout(()=>{ if(fish && fish.parentElement) fish.remove(); }, 900);
-        }
-      }catch(e){ }
-    }, contDelayMs);
+    // NOTE: ここでは「捕まえ損ねたら魚を消す/戻す」処理は行わない。
+    // 魚は上のtransitionで最初から画面外まで一直線に進むようスケジュール済みなので、
+    // Missの場合は何もしなくても自然に通過していく。
+    // Good/Perfect で捕獲された場合のみ animateFishToBear() が割り込んで消す。
 
-    // safety: long timeout fallback in case something else prevents removal
-    setTimeout(()=>{ if(fish && fish.parentElement) fish.remove(); }, (startDelayMs + travelMs + 4000));
+    // safety: 万一取り残された場合の保険（画面外まで進み切った後に確実に除去）
+    setTimeout(()=>{ if(fish && fish.parentElement) fish.remove(); }, startDelayMs + totalDurationMsX + 500);
 
-    // Helper: when a player hits a note, animate the fish quickly to the bear so it looks
-    // like the fish is being eaten at the bear's mouth, then remove it. This preserves
-    // the scheduled bear "eating" animation (playBearMeasure) which still runs at
-    // the measure's munchTime for the measure-level feedback and scoring.
+    // Helper: when a player hits a note (Good/Perfect), stop the fish exactly where it currently is
+    // on screen, then shrink+fade it out so it looks like the bear caught and ate it there.
     function animateFishToBear(note, quickMs){
       try{
         const f = note && note.fishEl;
-        if(!f || !f.parentElement) return;
-        const areaRect2 = playArea.getBoundingClientRect();
-        const catRect2 = catEl.getBoundingClientRect();
-        const bearRect2 = bearEl.getBoundingClientRect();
-        const startX2 = catRect2.left + catRect2.width/2 - areaRect2.left - 32;
-        const startY2 = catRect2.top + catRect2.height/2 - areaRect2.top - 16;
-        const endX2 = bearRect2.left + bearRect2.width/2 - areaRect2.left - 32;
-        const endY2 = bearRect2.top + bearRect2.height/2 - areaRect2.top - 16;
-        // use a short transition so the fish visibly travels to the bear
-        f.style.transition = `transform ${Math.max(80, quickMs)}ms ease, opacity ${Math.max(120, Math.round(quickMs*1.1))}ms ease`;
-        // move to bear and slightly shrink for "eaten" feeling
-        requestAnimationFrame(()=>{
-           f.style.transform = `translate(${endX2 - startX2}px, ${endY2 - startY2}px) scale(0.36)`;
-           f.style.opacity = '0';
-        });
-        // remove after the quick animation completes
-        setTimeout(()=>{ try{ if(f && f.parentElement) f.remove(); }catch(e){} }, Math.max(quickMs,120) + 80);
-        // mark visual taken so continuation doesn't try to move it later
+        if(!f) return;
+        // mark as eaten so playBearMeasure's fallback doesn't double-handle it
         try{ note.eaten = true; note._visualTaken = true; }catch(e){}
+
+        // 現在の見た目上の位置を確定させてから消すアニメーションに切り替える（急なジャンプを防ぐ）
+        try{
+          const areaRectNow = playArea.getBoundingClientRect();
+          const fRectNow = f.getBoundingClientRect();
+          const curLeft = fRectNow.left - areaRectNow.left;
+          const curTop = fRectNow.top - areaRectNow.top;
+          f.style.transition = 'none';
+          f.style.left = curLeft + 'px';
+          f.style.top = curTop + 'px';
+          // 強制リフローで位置確定を反映させる
+          void f.offsetWidth;
+        }catch(e){}
+
+        const dur = Math.max(60, quickMs);
+        try{
+          f.style.transition = `transform ${dur}ms ease, opacity ${Math.max(60, Math.round(dur*0.9))}ms ease`;
+          f.style.transform = 'scale(0.36)';
+          f.style.opacity = '0';
+        }catch(e){}
+        setTimeout(()=>{ try{ if(f && f.parentElement) f.remove(); }catch(e){} }, dur + 40);
+
+        // immediate small bear feedback so player sees the bear eat right away
+        try{
+          setBearEating(true);
+          const bi = bearEl.querySelector && bearEl.querySelector('img');
+          if(bi){ bi.style.transition = 'transform 160ms ease'; bi.style.transform = 'translateY(-6px) scale(1.04)'; setTimeout(()=>{ try{ bi.style.transform = ''; }catch(e){} }, 260); }
+          setTimeout(()=>{ try{ setBearEating(false); }catch(e){} }, 360);
+        }catch(e){}
       }catch(e){ /* ignore */ }
     }
+
+    // 呼び出し元(onUserInput)から使えるよう note に紐付けておく
+    if(item) item._animateFishToBear = animateFishToBear;
   }
 
   function findNearestActiveNote(time){
@@ -503,9 +570,9 @@
         note.hit = true;
         showJudgement('Perfect');
         playPerfect(t);
-        // animate fish to bear quickly so it looks like the bear eats it (keeps visual at bear)
+        // 魚をその場で止めて消す（捕獲演出）
         try{
-          animateFishToBear(note, 180);
+          if(note._animateFishToBear) note._animateFishToBear(note, 180);
         }catch(e){}
         // ensure flagged as eaten for later logic
         try{ note.eaten = true; }catch(e){}
@@ -514,9 +581,9 @@
         note.hit = true;
         showJudgement('Good');
         playSuccess(t);
-        // animate fish to bear quickly so it looks like the bear eats it (keeps visual at bear)
+        // 魚をその場で止めて消す（捕獲演出）
         try{
-          animateFishToBear(note, 180);
+          if(note._animateFishToBear) note._animateFishToBear(note, 180);
         }catch(e){}
         // ensure flagged as eaten for later logic
         try{ note.eaten = true; }catch(e){}
@@ -543,8 +610,8 @@
           note.hit = true;
           showJudgement('Good');
           playSuccess(t);
-          // animate to bear for visible feedback and mark eaten
-          try{ animateFishToBear(note, 200); }catch(e){}
+          // 魚をその場で止めて消す（捕獲演出）
+          try{ if(note._animateFishToBear) note._animateFishToBear(note, 200); }catch(e){}
           try{ note.eaten = true; }catch(e){}
         } else {
           // as a last resort, if there are closely spaced notes, accept half-distance to neighbor as Good
@@ -568,18 +635,19 @@
             note.hit = true;
             showJudgement('Good');
             playSuccess(t);
-            // animate to bear for visible feedback and mark eaten
-            try{ animateFishToBear(note, 200); }catch(e){}
+            // 魚をその場で止めて消す（捕獲演出）
+            try{ if(note._animateFishToBear) note._animateFishToBear(note, 200); }catch(e){}
             try{ note.eaten = true; }catch(e){}
           } else {
             note.status = 'Miss';
             note.hit = false;
             showJudgement('Miss');
+            // Miss の場合は魚には触れない。既に開始している「右へ通過し続ける」動きのまま進む。
           }
         }
       }
 
-      // visual feedback on the fish itself; actual munch/play happens during bear measure
+      // visual feedback on the fish itself (捕獲されず通過中の魚にも軽くフィードバックを出す)
       try{ if(note.fishEl) note.fishEl.classList.add('hit'); }catch(e){}
       setTimeout(()=>{ try{ if(note.fishEl) note.fishEl.classList.remove('hit'); }catch(e){} }, 220);
     } else {
@@ -608,6 +676,9 @@
     started = true;
     score = 0; scoreVal.textContent = score;
     ensureAudio();
+    setBearEating(false);
+    ensureZoneElements();
+    updateZoneOverlay();
 
     // disable controls while playing
     if(difficultySelect) difficultySelect.disabled = true;
@@ -637,6 +708,7 @@
     if(difficultySelect) difficultySelect.disabled = false;
     if(bpmInput) bpmInput.disabled = false;
     startBtn.disabled = false;
+    setBearEating(false);
     // hide turn banner
     try{ if(turnBanner){ turnBanner.classList.add('hidden'); clearTimeout(turnBanner._timer); } }catch(e){}
     alert('終了！ スコア: ' + score + ' 点');
@@ -676,5 +748,11 @@
 
   // small helper: allow tapping anywhere before start to resume audio on mobile
   document.addEventListener('touchstart', function once(){ if(audioCtx && audioCtx.state==='suspended'){ audioCtx.resume(); } document.removeEventListener('touchstart', once); });
+
+  // ---- 判定範囲オーバーレイの初期化 ----
+  // ページ読み込み時点でクマの上に円を表示し、リサイズ時にも位置・サイズを追従させる
+  ensureZoneElements();
+  updateZoneOverlay();
+  window.addEventListener('resize', updateZoneOverlay);
 
 })();
