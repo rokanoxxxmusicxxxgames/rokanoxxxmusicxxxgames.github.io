@@ -2,10 +2,120 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>くだらないゲーム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>くだらないゲームセンター</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        header {
+            text-align: center;
+            padding: 50px 20px 30px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 36px;
+        }
+
+        header p {
+            margin-top: 15px;
+            color: #666;
+        }
+
+        .games {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .game {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .game h2 {
+            margin-top: 0;
+        }
+
+        .game p {
+            color: #666;
+        }
+
+        .play-button {
+            display: inline-block;
+            padding: 10px 25px;
+            background: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        .play-button:hover {
+            background: #555;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>くだらないゲーム</h1>
-    <p>ここにくだらないゲームを追加していきます。</p>
+
+    <header>
+        <h1>🎮 くだらないゲームセンター</h1>
+        <p>暇つぶしにもならないゲームを集めています。</p>
+    </header>
+
+    <main class="games">
+
+        <!-- 30秒クリックゲーム -->
+        <section class="game">
+            <h2>🖱️ 30秒クリックゲーム</h2>
+
+            <p>
+                30秒間でボタンを何回クリックできるか競おう。
+                ボタンはクリックするたびに逃げます。
+            </p>
+
+            <a class="play-button" href="games/click/">
+                遊ぶ
+            </a>
+        </section>
+
+        <!--
+        ゲームを追加するときはここに追加する。
+
+        <section class="game">
+            <h2>🎵 リズムゲーム</h2>
+
+            <p>
+                音楽に合わせてキーを叩こう。
+            </p>
+
+            <a class="play-button" href="games/rhythm/">
+                遊ぶ
+            </a>
+        </section>
+        -->
+
+    </main>
+
+    <footer>
+        <p>くだらないゲームを少しずつ追加しています。</p>
+    </footer>
+
 </body>
 </html>
