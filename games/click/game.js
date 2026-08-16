@@ -7,9 +7,9 @@ const isMobile = window.matchMedia("(max-width: 480px)").matches || navigator.ma
 const mobileSpeedFactor = isMobile ? 0.65 : 1;
 
 const rarityConfig = {
-    normal: { points: 1, durationMin: 1050, durationMax: 1500, imageKey: "normal", sound: { file: "sounds/mole-normal.wav", frequency: 220, duration: 0.12, type: "triangle" } },
-    rare: { points: 3, durationMin: 850, durationMax: 1080, imageKey: "rare", sound: { file: "sounds/mole-rare.wav", frequency: 330, duration: 0.16, type: "square" } },
-    epic: { points: 5, durationMin: 650, durationMax: 930, imageKey: "epic", sound: { file: "sounds/mole-epic.wav", frequency: 440, duration: 0.22, type: "sawtooth" } }
+    normal: { points: 1, durationMin: 1050, durationMax: 1500, imageKey: "normal", hitImageKey: "hitNormal", sound: { file: "sounds/mole-normal.wav", frequency: 220, duration: 0.12, type: "triangle" } },
+    rare: { points: 3, durationMin: 850, durationMax: 1080, imageKey: "rare", hitImageKey: "hitRare", sound: { file: "sounds/mole-rare.wav", frequency: 330, duration: 0.16, type: "square" } },
+    gold: { points: 5, durationMin: 650, durationMax: 930, imageKey: "gold", hitImageKey: "hitGold", sound: { file: "sounds/mole-epic.wav", frequency: 440, duration: 0.22, type: "sawtooth" } }
 };
 
 let score = 0;
@@ -36,8 +36,9 @@ holes.forEach((hole) => {
 
         const image = hole.querySelector(".mole-image");
         const pointsBadge = hole.querySelector(".mole-points");
+        const hitKey = `hit${rarity.charAt(0).toUpperCase()}${rarity.slice(1)}`;
         if (image) {
-            image.src = image.dataset.hit;
+            image.src = image.dataset[hitKey] || image.dataset.hit || image.dataset.hitNormal;
         }
         if (pointsBadge) {
             pointsBadge.textContent = `+${points}`;
@@ -48,7 +49,7 @@ holes.forEach((hole) => {
 
         setTimeout(() => {
             hideHole(hole);
-        }, 160);
+        }, 260);
     });
 });
 
@@ -126,7 +127,7 @@ function showHole(hole) {
     if (rarityRoll > 0.7 && rarityRoll <= 0.95) {
         rarity = "rare";
     } else if (rarityRoll > 0.95) {
-        rarity = "epic";
+        rarity = "gold";
     }
 
     const config = rarityConfig[rarity];
@@ -139,7 +140,7 @@ function showHole(hole) {
     hole.disabled = false;
 
     if (image) {
-        image.src = image.dataset[config.imageKey];
+        image.src = image.dataset[config.imageKey] || image.dataset.normal;
     }
     if (pointsBadge) {
         pointsBadge.textContent = String(config.points);
