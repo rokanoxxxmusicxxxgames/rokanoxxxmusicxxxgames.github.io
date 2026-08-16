@@ -4,9 +4,9 @@ const timeText = document.getElementById("time");
 const holes = [...document.querySelectorAll(".mole")];
 
 const rarityConfig = {
-    normal: { points: 1, durationMin: 800, durationMax: 1300, imageKey: "normal", sound: { file: "sounds/mole-normal.wav", frequency: 220, duration: 0.12, type: "triangle" } },
-    rare: { points: 3, durationMin: 500, durationMax: 850, imageKey: "rare", sound: { file: "sounds/mole-rare.wav", frequency: 330, duration: 0.16, type: "square" } },
-    epic: { points: 5, durationMin: 300, durationMax: 550, imageKey: "epic", sound: { file: "sounds/mole-epic.wav", frequency: 440, duration: 0.22, type: "sawtooth" } },
+    normal: { points: 1, durationMin: 1000, durationMax: 1500, imageKey: "normal", sound: { file: "sounds/mole-normal.wav", frequency: 220, duration: 0.12, type: "triangle" } },
+    rare: { points: 3, durationMin: 850, durationMax: 1200, imageKey: "rare", sound: { file: "sounds/mole-rare.wav", frequency: 330, duration: 0.16, type: "square" } },
+    epic: { points: 5, durationMin: 850, durationMax: 1100, imageKey: "epic", sound: { file: "sounds/mole-epic.wav", frequency: 440, duration: 0.22, type: "sawtooth" } },
 };
 
 let score = 0;
