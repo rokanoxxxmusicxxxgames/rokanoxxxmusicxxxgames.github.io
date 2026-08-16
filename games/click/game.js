@@ -3,6 +3,9 @@ const scoreText = document.getElementById("score");
 const timeText = document.getElementById("time");
 const holes = [...document.querySelectorAll(".mole")];
 
+const isMobile = window.matchMedia("(max-width: 480px)").matches || navigator.maxTouchPoints > 0;
+const mobileSpeedFactor = isMobile ? 0.65 : 1;
+
 const rarityConfig = {
     normal: { points: 1, durationMin: 1050, durationMax: 1500, imageKey: "normal", sound: { file: "sounds/mole-normal.wav", frequency: 220, duration: 0.12, type: "triangle" } },
     rare: { points: 3, durationMin: 850, durationMax: 1080, imageKey: "rare", sound: { file: "sounds/mole-rare.wav", frequency: 330, duration: 0.16, type: "square" } },
@@ -112,9 +115,9 @@ function getWaveCount() {
 
 function getWaveInterval() {
     const progress = 1 - timeLeft / 30;
-    const minInterval = 400;
-    const maxInterval = 1600;
-    return Math.max(minInterval, maxInterval - progress * 1100);
+    const minInterval = isMobile ? 320 : 400;
+    const maxInterval = isMobile ? 1200 : 1600;
+    return Math.max(minInterval, Math.round((maxInterval - progress * 1100) * mobileSpeedFactor));
 }
 
 function showHole(hole) {
@@ -142,7 +145,7 @@ function showHole(hole) {
         pointsBadge.textContent = String(config.points);
     }
 
-    const duration = config.durationMin + Math.random() * (config.durationMax - config.durationMin);
+    const duration = (config.durationMin + Math.random() * (config.durationMax - config.durationMin)) * mobileSpeedFactor;
     const timeoutId = setTimeout(() => {
         hideHole(hole);
     }, duration);
