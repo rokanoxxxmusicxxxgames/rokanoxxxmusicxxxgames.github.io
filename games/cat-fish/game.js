@@ -34,14 +34,31 @@
 
   // ---- Bear image state helper ----
   // NOTE: BEAR_EATING_SRC のパスはお使いの画像ファイル名に合わせて変更してください
-  const BEAR_IDLE_SRC = 'images/bear.svg';
-  const BEAR_EATING_SRC = 'images/bear-eating.svg';
+  const BEAR_IDLE_SRC = 'images/bear.png';
+  const BEAR_EATING_SRC = 'images/bear-eating.png';
 
   function setBearEating(isEating){
     bearEl.classList.toggle('hit', isEating);
     bearEl.classList.toggle('eating', isEating);
     const img = bearEl.querySelector('img');
     if(img) img.src = isEating ? BEAR_EATING_SRC : BEAR_IDLE_SRC;
+  }
+
+  // ---- Cat image state helper (魚を投げる瞬間の画像切り替え) ----
+  // 待機時の画像はHTMLに元々設定されているsrcをそのまま記憶しておき、それに戻す。
+  const CAT_SHOOT_SRC = 'images/cat-shoot.png';
+
+  function setCatShooting(isShooting){
+    catEl.classList.toggle('shoot', isShooting);
+    const img = catEl.querySelector('img');
+    if(!img) return;
+    if(isShooting){
+      // 初回だけ、切り替え前（待機時）のsrcを記憶しておく
+      if(!img.dataset.idleSrc) img.dataset.idleSrc = img.getAttribute('src');
+      img.src = CAT_SHOOT_SRC;
+    } else {
+      img.src = img.dataset.idleSrc || img.src;
+    }
   }
 
   // ---- Perfect/Good 判定範囲の可視化（クマの上に重ねる半透明の円） ----
@@ -279,6 +296,9 @@
     if(item.kind === 'cat'){
       // cat note: meow and throw fish
       playMeow(t);
+      // 投げる瞬間、猫の画像を投げポーズに切り替えて少ししたら元に戻す
+      setCatShooting(true);
+      setTimeout(()=>setCatShooting(false), 250);
       // schedule fish animation to align with the scheduled audio time
       createFishAnimation(t, item);
       // prune old instances after this note window passes
@@ -358,7 +378,7 @@
     const areaRect = playArea.getBoundingClientRect();
     const fish = document.createElement('div');
     fish.className = 'fish';
-    fish.innerHTML = '<img src="images/fish.svg" alt="fish">';
+    fish.innerHTML = '<img src="images/fish.png" alt="fish">';
     fishLayer.appendChild(fish);
     // starting position (relative to playArea)
     const startX = catRect.left + catRect.width/2 - areaRect.left - 32; // center - half fish width
@@ -677,6 +697,7 @@
     score = 0; scoreVal.textContent = score;
     ensureAudio();
     setBearEating(false);
+    setCatShooting(false);
     ensureZoneElements();
     updateZoneOverlay();
 
@@ -709,6 +730,7 @@
     if(bpmInput) bpmInput.disabled = false;
     startBtn.disabled = false;
     setBearEating(false);
+    setCatShooting(false);
     // hide turn banner
     try{ if(turnBanner){ turnBanner.classList.add('hidden'); clearTimeout(turnBanner._timer); } }catch(e){}
     alert('終了！ スコア: ' + score + ' 点');
