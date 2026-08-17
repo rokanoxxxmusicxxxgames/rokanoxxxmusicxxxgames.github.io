@@ -100,9 +100,9 @@
     const cx = bearRect.left + bearRect.width/2 - areaRect.left;
     const cy = bearRect.top + bearRect.height/2 - areaRect.top;
 
-    // onUserInput内の距離救済判定と同じ半径をGoodの目安として使用
-    const goodRadius = (window.innerWidth < 600) ? 56 : 80;
-    const perfectRadius = Math.round(goodRadius * 0.45);
+    // onUserInput内の距離救済判定と同じ半径をGoodの目安として使用（より厳しい判定）
+    const goodRadius = (window.innerWidth < 600) ? 28 : 40;
+    const perfectRadius = Math.round(goodRadius * 0.5);
 
     goodZoneEl.style.left = cx + 'px';
     goodZoneEl.style.top = cy + 'px';
@@ -619,8 +619,8 @@
             const fx = fR.left + fR.width/2; const fy = fR.top + fR.height/2;
             const bx = bR.left + bR.width/2; const by = bR.top + bR.height/2;
             const dist = Math.hypot(fx-bx, fy-by);
-            // threshold: 80px on desktop, scaled down on small screens
-            const threshold = (window.innerWidth < 600) ? 56 : 80;
+            // threshold: 40px on desktop, scaled down on small screens (より厳しい判定)
+            const threshold = (window.innerWidth < 600) ? 28 : 40;
             if(dist <= threshold) accepted = true;
           }
         }catch(e){}
