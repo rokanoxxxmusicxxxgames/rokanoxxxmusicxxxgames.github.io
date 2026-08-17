@@ -381,7 +381,7 @@
     fish.innerHTML = '<img src="images/fish.png" alt="fish">';
     fishLayer.appendChild(fish);
     // starting position (relative to playArea)
-    const startX = catRect.left + catRect.width/2 - areaRect.left - 32; // center - half fish width
+    const startX = catRect.right - areaRect.left - 5;// center - half fish width
     const startY = catRect.top + catRect.height/2 - areaRect.top - 16;
     const endX = bearRect.left + bearRect.width/2 - areaRect.left - 32;
     const endY = bearRect.top + bearRect.height/2 - areaRect.top - 16;
