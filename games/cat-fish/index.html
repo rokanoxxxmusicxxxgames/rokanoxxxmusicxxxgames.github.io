@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>森のクマさん</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    #play-area {
+      background-image: url("images/background.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="game">
+    <header>
+      <h1>森のクマさん</h1>
+      <div id="score">スコア: <span id="score-val">0</span></div>
+    </header>
+
+    <main>
+      <div id="play-area">
+        <div id="cat" class="character">
+          <img src="images/cat.png" alt="cat">
+        </div>
+
+        <div id="feedback" aria-hidden="true"></div>
+
+        <div id="bear" class="character">
+          <img src="images/bear.png" alt="bear">
+
+          <div class="judge-overlay" aria-hidden="true">
+            <div class="judge-ring perfect"></div>
+            <div class="judge-ring good"></div>
+          </div>
+        </div>
+
+        <div id="fish-layer" aria-hidden="true"></div>
+
+        <div id="hit-zone" class="hit-zone" aria-hidden="true"></div>
+
+        <div id="turn-banner" class="turn-banner hidden" aria-hidden="true">
+          準備中
+        </div>
+
+        <button id="tap-area" class="tap-area" aria-label="タップエリア">
+          タップ!
+        </button>
+
+        <div id="judgement" class="judgement" aria-hidden="true"></div>
+      </div>
+
+      <div id="controls">
+        <button id="start">スタート</button>
+        <button id="restart">リスタート</button>
+
+        <label for="difficulty">難易度:</label>
+        <select id="difficulty">
+          <option value="easy">Easy (60 BPM)</option>
+          <option value="normal" selected>Normal (70 BPM)</option>
+          <option value="hard">Hard (90 BPM)</option>
+        </select>
+
+        <label for="bpm-input">テンポ (BPM):</label>
+        <input
+          id="bpm-input"
+          type="number"
+          value="70"
+          min="30"
+          max="240"
+          style="width:80px"
+        >
+
+        <p>タイミングよくタップしてクマに魚を食べさせよう！</p>
+      </div>
+    </main>
+
+    <footer>
+      <small>スマホは横スクリーンで遊んでね。</small>
+    </footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

@@ -1,0 +1,396 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto,
+    'Hiragino Kaku Gothic ProN', Meiryo, Arial;
+  margin: 0;
+  padding: 0;
+  background: #f6f8fb;
+  color: #222;
+}
+
+#game {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 16px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ==============================
+   ゲームエリア
+   ============================== */
+
+#play-area {
+  position: relative;
+  height: 420px;
+
+  /* 背景画像 */
+  background-image: url("images/background.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  border-radius: 8px;
+  overflow: hidden;
+
+  padding: 24px 24px 140px 24px;
+}
+
+/* ==============================
+   キャラクター
+   ============================== */
+
+.character {
+  width: 160px;
+  height: 160px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: absolute;
+  top: 50%;
+
+  transform: translateY(-50%);
+}
+
+.character img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+#cat {
+  left: 24px;
+  z-index: 30;
+}
+
+#bear {
+  right: 24px;
+  z-index: 30;
+}
+
+/* ==============================
+   魚
+   ============================== */
+
+#fish-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+
+  pointer-events: none;
+  z-index: 60;
+}
+
+.fish {
+  position: absolute;
+
+  width: 64px;
+  height: 32px;
+
+  transform-origin: center;
+
+  transition:
+    transform 0.6s linear,
+    opacity 0.25s ease;
+
+  z-index: 65;
+
+  pointer-events: none;
+}
+
+.fish img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ==============================
+   タップボタン
+   ============================== */
+
+.tap-area {
+  position: absolute;
+
+  bottom: 12px;
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  height: 86px;
+  width: calc(100% - 48px);
+  max-width: 820px;
+
+  /* 背景が透けないようにする */
+  background: rgba(255, 255, 255, 0.95);
+
+  color: #333;
+
+  border: 3px solid #333;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 24px;
+  font-weight: bold;
+
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+
+  cursor: pointer;
+
+  z-index: 40;
+
+  pointer-events: auto;
+}
+
+/* タップ中 */
+.tap-area:active {
+  background: #ddd;
+  transform: translateX(-50%) scale(0.96);
+}
+
+/* ==============================
+   操作部分
+   ============================== */
+
+#controls {
+  margin-top: 14px;
+}
+
+button {
+  padding: 8px 12px;
+  font-size: 16px;
+  margin-right: 8px;
+}
+
+/* ==============================
+   フィードバック
+   ============================== */
+
+#feedback {
+  position: absolute;
+
+  left: 50%;
+  top: 10px;
+
+  transform: translateX(-50%);
+
+  padding: 6px 10px;
+
+  border-radius: 6px;
+
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+
+  display: none;
+}
+
+/* ==============================
+   Perfect / Good / Miss
+   ============================== */
+
+.judgement {
+  position: absolute;
+
+  left: 50%;
+  top: 20%;
+
+  transform: translateX(-50%);
+
+  padding: 10px 18px;
+
+  border-radius: 10px;
+
+  font-size: 22px;
+  font-weight: 700;
+
+  color: #222;
+
+  background: rgba(255, 255, 255, 0.95);
+
+  opacity: 0;
+
+  transition:
+    opacity 0.12s ease,
+    transform 0.18s ease;
+
+  pointer-events: none;
+
+  z-index: 40;
+}
+
+.judgement.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-6px);
+}
+
+.judgement.perfect {
+  background: #fff0a8;
+  color: #b36b00;
+}
+
+.judgement.good {
+  background: #d6f7d6;
+  color: #0a7b19;
+}
+
+.judgement.miss {
+  background: #ffd6d6;
+  color: #7b0a0a;
+}
+
+.judgement.measure {
+  background: #e8f0ff;
+  color: #123a7a;
+}
+
+/* ==============================
+   ターン表示
+   ============================== */
+
+.turn-banner {
+  position: absolute;
+
+  left: 50%;
+  top: 8px;
+
+  transform: translateX(-50%);
+
+  padding: 8px 12px;
+
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.95);
+
+  font-weight: 700;
+
+  z-index: 45;
+
+  color: #222;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
+
+.turn-banner.hidden {
+  opacity: 0;
+
+  transform:
+    translateX(-50%)
+    translateY(-6px);
+}
+
+.turn-banner.cat {
+  background: #fff7e5;
+  color: #6b3f00;
+}
+
+.turn-banner.bear {
+  background: #e8f7ff;
+  color: #0b5a86;
+}
+
+/* ==============================
+   クマが食べるとき
+   ============================== */
+
+#bear.eating img {
+  transform:
+    translateY(-6px)
+    scale(1.04);
+
+  filter: brightness(1.08);
+}
+
+/* ==============================
+   スマホ
+   ============================== */
+
+@media (max-width: 700px) {
+
+  #play-area {
+    height: auto;
+
+    min-height: 520px;
+
+    padding:
+      18px
+      18px
+      110px
+      18px;
+  }
+
+  .character {
+    position: relative;
+
+    width: 140px;
+    height: 140px;
+
+    margin: 10px auto;
+
+    top: auto;
+
+    transform: none;
+  }
+
+  .tap-area {
+    position: relative;
+
+    height: 86px;
+
+    margin-top: 12px;
+
+    border-radius: 12px;
+
+    width: 100%;
+
+    left: 0;
+
+    transform: none;
+  }
+
+  .tap-area:active {
+    transform: scale(0.96);
+  }
+
+  #fish-layer {
+    z-index: 10;
+  }
+}
+
+/* ==============================
+   小さいスマホ
+   ============================== */
+
+@media (max-width: 600px) {
+
+  .character {
+    width: 110px;
+    height: 110px;
+  }
+
+  .fish {
+    width: 48px;
+    height: 24px;
+  }
+
+  .judgement {
+    font-size: 18px;
+    top: 14%;
+  }
+
+}
